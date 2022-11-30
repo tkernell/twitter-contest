@@ -7,3 +7,8 @@
 - ppl who maintain streak get a percent of total losers' stakes
 - losers and streak maintainers determined using tellor
 - 
+
+# todo
+## frontend
+- connect metamask to app
+- able to call functions from frontend
