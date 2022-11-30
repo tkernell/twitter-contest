@@ -17,7 +17,7 @@ contract TheContest is UsingTellor {
     IERC20 public token;
     uint256 public pot;
     uint256 public protocolFee;
-    uint256 public protocolLoserFee;
+    uint256 public protocolLoserFeePercentage;
     uint256 public remainingCount;
     uint256 public reportingWindow = 2 days + 12 hours; 
     
@@ -37,7 +37,7 @@ contract TheContest is UsingTellor {
         uint256 _startDeadlineDays,
         uint256 _endDeadlineDays,
         uint256 _protocolFee,
-        uint256 _protocolLoserFee) 
+        uint256 _protocolLoserFeePercentage) 
         UsingTellor(_tellor) {
         startDeadline = block.timestamp + _startDeadlineDays * 1 days;
         endDeadline = startDeadline + _endDeadlineDays * 1 days;
@@ -45,6 +45,7 @@ contract TheContest is UsingTellor {
         token = IERC20(_token);
         owner = msg.sender;
         protocolFee = _protocolFee;
+        protocolLoserFeePercentage = _protocolLoserFeePercentage;
     }
 
     function register(string memory _handle) public {
