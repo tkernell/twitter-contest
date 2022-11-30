@@ -1,0 +1,12 @@
+- one pager
+- title & brief description of contest
+- show total time left in contest
+- show time left in current window
+- show users who haven't tweeted yet in current window
+- show registered users w/ links to their twitter accounts
+- show users who have broken their streak
+- show total amount in pot
+- show total rewards to be distributed at end (total losers' lost stakes)
+- withdraw rewards button
+- claim loser button
+- register button
