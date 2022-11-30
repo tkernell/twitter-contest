@@ -16,15 +16,17 @@ contract TheContest is UsingTellor {
     uint256 public wager;
     IERC20 public token;
     uint256 public pot;
+    uint256 public protocolFee;
     uint256 public remainingCount;
     uint256 public reportingWindow = 2 days + 12 hours; 
+    
     mapping(address => Member) public members;
-
+    mapping(string => address) public handleToAddress;
 
     struct Member {
-        bool approved;
         bool inTheRunning;
         bool claimedFunds;
+        string handle;
     }
 
     constructor(
@@ -32,68 +34,53 @@ contract TheContest is UsingTellor {
         address _token, 
         uint256 _wager,
         uint256 _startDeadlineDays,
-        uint256 _endDeadlineDays) 
+        uint256 _endDeadlineDays,
+        uint256 _protocolFee) 
         UsingTellor(_tellor) {
         startDeadline = block.timestamp + _startDeadlineDays * 1 days;
         endDeadline = startDeadline + _endDeadlineDays * 1 days;
         wager = _wager;
         token = IERC20(_token);
         owner = msg.sender;
+        protocolFee = _protocolFee;
     }
 
-    function approveUsers(address[] calldata _users) public {
-        require(msg.sender == owner, "Only owner can approve users");
-        require(block.timestamp < startDeadline, "Contest has already started");
-        for(uint256 _i = 0; _i<_users.length; _i++) {
-            members[_users[_i]].approved = true;
-        }
-    }
-
-    // STREAK-FREEZE - DOLLAR AUCTION MECHANISM? AND OTHER MECHANISM
-    // TIMER AFTER NOTWEET, MORE STAKE LOST OVER TIME, IF FREEZE USED
-    // PAY TO EXTEND WINDOW
-    // NFT TO WINNERS
-    // PAY TO NARROW OTHER PLAYER'S SUBMISSION WINDOW, OTHER PLAYER CAN PAY TO RE-EXTEND WINDOW
-    // NFT USED TO BUY STREAK FREEZE
-    // PAY TO ADD REQUIREMENTS TO ANOTHER PLAYER
-    // COMPLICATED FORMULAS
-    // PAY TO UNSTREAK
-    // PERSON WITH LEAST ENGAGEMENT WITH CONTRACT ...
-    // FIRST PERSON TO JOIN GET MORE OF SOMETING...
-    // IF YOU UNSTREAK SOMEONE, AND THEY RESTREAK, YOU ARE NOW VULNERABLE
-    // PAY TO EXTEND THE FINAL DEADLINE, ANYONE CAN DO THIS FOR A PRICE
-    // IF YOU STAY AT THE TOP OF THE LEADERBOARD FOR A MONTH, YOU GET TO WITHDRAW
-    // LOWEST ENGAGEMENT PERSON LOSES THEIR STAKE, IT GETS PUT IN SOME HIGH LEVERAGE POSITION
-    // YOU CAN WALK AWAY WITH YOUR STAKE IF YOU FIND SOMEONE ELSE TO STAKE REPLACE YOU 
-
-
-    function register() public {
+    function register(string memory _handle) public {
+        require(bytes(_handle).length > 0, "Handle cannot be empty");
         Member storage _member = members[msg.sender];
-        require(_member.approved);
         require(token.transferFrom(msg.sender, address(this), wager));
         require(!_member.inTheRunning);
         require(block.timestamp < startDeadline);
+        require(handleToAddress[_handle] == address(0), "Handle already registered");
         pot += wager;
         remainingCount++;
+        _member.handle = _handle;
+        _member.inTheRunning = true;
+        handleToAddress[_handle] = msg.sender;
     }
 
-    function claimLoser(address _user, uint256 _day) public {
-        require((block.timestamp - startDeadline) > _day * 1 days + reportingWindow, "Reporting window has not passed");
-        require(startDeadline + _day * 1 days < endDeadline, "_day is out of range");
-        require(members[_user].inTheRunning, "User is not in the running");
+    function claimLoser(uint256 _index) public {
         require(remainingCount > 1, "Only one user left");
-        bytes memory _queryData = abi.encode("TwitterContest", abi.encode(_user, _day));
+        require(block.timestamp > startDeadline, "Contest has not started");
+        require(block.timestamp < endDeadline + reportingWindow, "Contest has ended");
+        bytes memory _queryData = abi.encode("TwitterContestV1", abi.encode(bytes("")));
         bytes32 _queryId = keccak256(_queryData);
-        (, uint256 _timestampRetrieved) = getDataBefore(_queryId, block.timestamp - 12 hours);
-        require(_timestampRetrieved == 0);
+        uint256 _timestampRetrieved = getTimestampbyQueryIdandIndex(_queryId, _index);
+        require(_timestampRetrieved > 0, "No data found");
+        require(_timestampRetrieved > block.timestamp - 12 hours, "Oracle dispute period has not passed");
+        bytes memory _valueRetrieved = retrieveData(_queryId, _timestampRetrieved);
+        string memory _handle = abi.decode(_valueRetrieved, (string));
+        address _user = handleToAddress[_handle];
+        require(members[_user].inTheRunning, "User is not in the running");
         members[_user].inTheRunning = false;
+        remainingCount--;
     }
 
     function claimFunds() public {
         Member storage _member = members[msg.sender];
         require(_member.inTheRunning, "not a valid participant");
         require(!_member.claimedFunds, "funds already claimed");
-        require(block.timestamp > endDeadline + reportingWindow + 12 hours || remainingCount == 1, "Game still active");
+        require(block.timestamp > endDeadline + reportingWindow || remainingCount == 1, "Game still active");
         _member.claimedFunds = true;
         token.transfer(msg.sender, pot / remainingCount);
     }
