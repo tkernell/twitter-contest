@@ -87,6 +87,25 @@ describe("TheContest - Function tests", function() {
   });
 
   it("claimLoser", async function() {
+    // register one account
+
+    // try to claim loser with only one account
+
+    // register two more accounts
+
+    // try to claim loser before contest start
+
+    // try to claim loser when no oracle value has been submitted
+
+    // submitValue to tellor oracle signifying someone broke their tweeting streak
+
+    // try to claim loser before oracle dispute period has elapsed
+
+    // successfully claim loser
+
+    // try to claim loser on account not "in the money"
+
+    // try to claim loser after contest has ended
 
   });
 

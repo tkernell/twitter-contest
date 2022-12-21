@@ -63,6 +63,7 @@ contract TheContest is UsingTellor {
         require(remainingCount > 1, "Only one user left");
         require(block.timestamp > startDeadline, "Contest has not started");
         require(block.timestamp < endDeadline + reportingWindow, "Contest has ended");
+        // Could query id be hardcoded above so it doesn't have to be generated every time this function is called?
         bytes memory _queryData = abi.encode("TwitterContestV1", abi.encode(bytes("")));
         bytes32 _queryId = keccak256(_queryData);
         uint256 _timestampRetrieved = getTimestampbyQueryIdandIndex(_queryId, _index);
