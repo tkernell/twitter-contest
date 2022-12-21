@@ -14,7 +14,6 @@ describe("TheContest - Function tests", function() {
   const START_DEADLINE_DAYS = 1;
   const END_DEADLINE_DAYS = 100;
   const PROTOCOL_FEE = h.toWei("10")
-  const PROTOCOL_LOSER_FEE_PERCENTAGE = 10;
   const queryData = abiCoder.encode(["string", "bytes"], ["TwitterContestV1", ethers.utils.toUtf8Bytes("")]);
   const queryId = keccak256(queryData);
   console.log("queryId:", queryId)
@@ -29,7 +28,7 @@ describe("TheContest - Function tests", function() {
     token = await TellorPlayground.deploy();
     await token.deployed();
     const Contest = await ethers.getContractFactory("TheContest");
-    contest = await Contest.deploy(tellor.address, token.address, h.toWei("500"), START_DEADLINE_DAYS, END_DEADLINE_DAYS, PROTOCOL_FEE, PROTOCOL_LOSER_FEE_PERCENTAGE);
+    contest = await Contest.deploy(tellor.address, token.address, h.toWei("500"), START_DEADLINE_DAYS, END_DEADLINE_DAYS, PROTOCOL_FEE);
     await contest.deployed();
   });
 

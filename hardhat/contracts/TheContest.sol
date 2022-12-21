@@ -11,13 +11,12 @@ interface IERC20 {
 
 contract TheContest is UsingTellor {
     address public owner;
-    uint256 public startDeadline;
+    uint256 public startDeadline; // when the contest starts
     uint256 public endDeadline;
-    uint256 public wager;
+    uint256 public wager; // contestant's initial stake
     IERC20 public token;
     uint256 public pot;
     uint256 public protocolFee;
-    uint256 public protocolLoserFeePercentage;
     uint256 public remainingCount;
     uint256 public reportingWindow = 2 days + 12 hours; 
     
@@ -36,8 +35,7 @@ contract TheContest is UsingTellor {
         uint256 _wager,
         uint256 _startDeadlineDays,
         uint256 _endDeadlineDays,
-        uint256 _protocolFee,
-        uint256 _protocolLoserFeePercentage) 
+        uint256 _protocolFee)
         UsingTellor(_tellor) {
         startDeadline = block.timestamp + _startDeadlineDays * 1 days;
         endDeadline = startDeadline + _endDeadlineDays * 1 days;
@@ -45,7 +43,6 @@ contract TheContest is UsingTellor {
         token = IERC20(_token);
         owner = msg.sender;
         protocolFee = _protocolFee;
-        protocolLoserFeePercentage = _protocolLoserFeePercentage;
     }
 
     function register(string memory _handle) public {
@@ -55,7 +52,7 @@ contract TheContest is UsingTellor {
         require(!_member.inTheRunning);
         require(block.timestamp < startDeadline);
         require(handleToAddress[_handle] == address(0), "Handle already registered");
-        pot += wager;
+        pot += wager - (wager * protocolFee / 100);
         remainingCount++;
         _member.handle = _handle;
         _member.inTheRunning = true;
