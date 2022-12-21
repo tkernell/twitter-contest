@@ -15,6 +15,10 @@ describe("TheContest - Function tests", function() {
   const END_DEADLINE_DAYS = 100;
   const PROTOCOL_FEE = h.toWei("10")
   const PROTOCOL_LOSER_FEE_PERCENTAGE = 10;
+  const queryData = abiCoder.encode(["string", "bytes"], ["TwitterContestV1", ethers.utils.toUtf8Bytes("")]);
+  const queryId = keccak256(queryData);
+  console.log("queryId:", queryId)
+  console.log("queryData:", queryData)
   
 
   beforeEach(async function() {
