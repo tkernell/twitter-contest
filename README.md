@@ -1,4 +1,6 @@
 # Twitter Contest V1
+Every contestant enters a stake. If they break their tweeting streak during the contest, they lose their stake. If they maintain their streak, they get a percent of the total losers' stakes plus their own stake once the contest ends.
+
 ## features
 - entry fee in usdc or other stablecoin
 - twitter handle string entered when person calls register function
