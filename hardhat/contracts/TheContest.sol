@@ -18,7 +18,7 @@ contract TheContest is UsingTellor {
     uint256 public pot;
     uint256 public protocolFee;
     uint256 public remainingCount;
-    uint256 public reportingWindow = 2 days + 12 hours; 
+    uint256 public reportingWindow = 1 days; 
     
     mapping(address => Member) public members;
     mapping(string => address) public handleToAddress;
@@ -48,11 +48,11 @@ contract TheContest is UsingTellor {
     function register(string memory _handle) public {
         require(bytes(_handle).length > 0, "Handle cannot be empty");
         Member storage _member = members[msg.sender];
-        require(token.transferFrom(msg.sender, address(this), wager));
-        require(!_member.inTheRunning);
-        require(block.timestamp < startDeadline);
+        // require(token.transferFrom(msg.sender, address(this), wager+protocolFee), "Wager + fee transfer failed");
+        require(!_member.inTheRunning, "Account already registered");
+        require(block.timestamp < startDeadline, "Contest already started");
         require(handleToAddress[_handle] == address(0), "Handle already registered");
-        pot += wager - (wager * protocolFee / 100);
+        pot += wager;
         remainingCount++;
         _member.handle = _handle;
         _member.inTheRunning = true;
