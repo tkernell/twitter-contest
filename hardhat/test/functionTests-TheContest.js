@@ -44,39 +44,46 @@ describe("TheContest - Function tests", function() {
   });
 
   it("register", async function() {
+    handle1 = "jjabramsdog"
+    handle2 = "bingo"
+    handle3 = "bongo"
+    // fund accounts
     bob = accounts[1]
     alice = accounts[2]
     ricky = accounts[3]
-    console.log("balance acct 0:", await token.balanceOf(bob.address))
+    await token.faucet(bob.address)
     await token.faucet(bob.address)
     await token.faucet(alice.address)
-    console.log("balance acct 0:", await token.balanceOf(bob.address))
+    await token.faucet(ricky.address)
 
     // try to register with no twitter handle included
     await expect(contest.connect(bob).register("")).to.be.revertedWith("Handle cannot be empty");
-  
-    // try to register with insufficient funds
 
     // register successfully
     balanceBefore = await token.balanceOf(bob.address)
-    await contest.connect(bob).register("jjabramsdog")
+    await token.connect(bob).approve(contest.address, WAGER + PROTOCOL_FEE)
+    await contest.connect(bob).register(handle1)
     balanceAfter = await token.balanceOf(bob.address)
     memberInfo = await contest.getMemberInfo(bob.address)
-    assert.equal(memberInfo.handle, "jjabramsdog", "twitter handle not set correctly");
-    // check wager and protocol fee deducted
-    console.log("balanceBefore:", balanceBefore)
-    console.log("balanceAfter:", balanceAfter)
-
-
+    assert.equal(memberInfo.handle, handle1, "twitter handle not set correctly");
+    assert.equal(memberInfo.inTheRunning, true, "inTheRunning not set correctly");
+    assert.equal(memberInfo.claimedFunds, false, "claimedFunds not set correctly");
+    assert.equal(balanceBefore - balanceAfter, BigInt(WAGER) + BigInt(PROTOCOL_FEE), "wager and protocol fee not deducted correctly");
+    assert.equal(await contest.remainingCount(), 1, "remainingCount not incremented");
+    assert.equal(await contest.pot(), WAGER, "pot not correct");
+    assert.equal(await contest.handleToAddress(handle1), bob.address, "handle not mapped to address");
 
     // try to register with same account
-    await expect(contest.connect(bob).register("bingo")).to.be.revertedWith("Account already registered");
+    await token.connect(bob).approve(contest.address, WAGER + PROTOCOL_FEE)
+    await expect(contest.connect(bob).register(handle2)).to.be.revertedWith("Account already registered");
     // try to register with same twitter handle
-    await expect(contest.connect(alice).register("jjabramsdog")).to.be.revertedWith("Handle already registered");
+    await token.connect(alice).approve(contest.address, WAGER + PROTOCOL_FEE)
+    await expect(contest.connect(alice).register(handle1)).to.be.revertedWith("Handle already registered");
 
     // try to register after start deadline
     await h.advanceTime(START_DEADLINE_DAYS * 86400 + 1)
-    await expect(contest.connect(ricky).register("bongo")).to.be.revertedWith("Contest already started");
+    await token.connect(ricky).approve(contest.address, WAGER + PROTOCOL_FEE)
+    await expect(contest.connect(ricky).register(handle3)).to.be.revertedWith("Contest already started");
   });
 
   it("claimLoser", async function() {
