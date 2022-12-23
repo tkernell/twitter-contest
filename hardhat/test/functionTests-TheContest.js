@@ -15,7 +15,7 @@ describe("TheContest - Function tests", function() {
   const END_DEADLINE_DAYS = 100;
   const PROTOCOL_FEE = h.toWei("10")
   const WAGER = h.toWei("500")
-  const queryData = abiCoder.encode(["string", "bytes"], ["TwitterContestV1", "0x"]);
+  const queryData = abiCoder.encode(["string", "bytes"], ["TwitterContestV1", abiCoder.encode(["bytes"], ["0x"])]);
   const queryId = keccak256(queryData);
   console.log("queryId:", queryId)
   console.log("queryData:", queryData)
@@ -111,8 +111,7 @@ describe("TheContest - Function tests", function() {
     await expect(contest.connect(accounts[1]).claimLoser(1)).to.be.revertedWith("No data found");
 
     // submitValue to tellor oracle signifying someone broke their tweeting streak
-    // convert "bongo" to bytes32
-    let loserHandleAsBytes = ethers.utils.formatBytes32String("bongo");
+    let loserHandleAsBytes = abiCoder.encode(["string"], ["bongo"])
     console.log("timestamp should be zero before submission", await tellor.getTimestampbyQueryIdandIndex(queryId, 0))
     await tellor.submitValue(queryId, loserHandleAsBytes, 0, queryData);
     console.log("timestamp", await h.getBlock().timestamp)
@@ -122,9 +121,11 @@ describe("TheContest - Function tests", function() {
     console.log("query id from contest contract", await contest.getQueryId())
 
     // try to claim loser before oracle dispute period has elapsed
+    await h.advanceTime(3600 * 6)
     // await expect(contest.connect(accounts[1]).claimLoser(0)).to.be.revertedWith("Oracle dispute period has not passed");
 
     // successfully claim loser
+    await h.advanceTime(12 * 3600 + 1) // advance time past oracle dispute period of 12 hours
 
     // try to claim loser on account not "in the money"
 
