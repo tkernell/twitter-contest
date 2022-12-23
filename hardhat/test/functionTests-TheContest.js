@@ -133,6 +133,19 @@ describe("TheContest - Function tests", function() {
   });
 
   it("claimFunds", async function() {
+    // register three accounts
+
+    // claim loser on one participant
+
+    // try to claim funds as non-participant
+
+    // try to claim funds before contest has ended
+
+    // claim funds successfully
+    
+    // try to claim funds again
+
+    // last eligible participant claims funds successfully
 
   });
 
