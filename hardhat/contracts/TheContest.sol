@@ -92,6 +92,7 @@ contract TheContest is UsingTellor {
         Member storage _member = members[msg.sender];
         require(_member.inTheRunning, "not a valid participant");
         require(!_member.claimedFunds, "funds already claimed");
+        // Wouddn't the OR condition result in a bug if the contest was over, but there was only one participant left who'd kept their streak?
         require(block.timestamp > endDeadline + reportingWindow || remainingCount == 1, "Game still active");
         _member.claimedFunds = true;
         token.transfer(msg.sender, pot / remainingCount);
