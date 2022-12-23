@@ -134,18 +134,38 @@ describe("TheContest - Function tests", function() {
 
   it("claimFunds", async function() {
     // register three accounts
+    await token.faucet(accounts[1].address)
+    await token.connect(accounts[1]).approve(contest.address, WAGER + PROTOCOL_FEE)
+    await contest.connect(accounts[1]).register("jjabramsdog")
+    await token.faucet(accounts[2].address)
+    await token.connect(accounts[2]).approve(contest.address, WAGER + PROTOCOL_FEE)
+    await contest.connect(accounts[2]).register("bingo")
+    await token.faucet(accounts[3].address)
+    await token.connect(accounts[3]).approve(contest.address, WAGER + PROTOCOL_FEE)
+    await contest.connect(accounts[3]).register("bongo")
 
     // claim loser on one participant
+    await h.advanceTime(START_DEADLINE_DAYS * 86400 + 1) // advance time past contest start
+    let loserHandleAsBytes = ethers.utils.formatBytes32String("bongo");
+    await tellor.submitValue(queryId, loserHandleAsBytes, 0, queryData);
+    await h.advanceTime(12 * 3600 + 1) // advance time past oracle dispute period of 12 hours
+    // await contest.connect(accounts[1]).claimLoser(0)
 
-    // try to claim funds as non-participant
+    // // try to claim funds as non-participant
+    // await expect(contest.connect(accounts[4]).claimFunds()).to.be.revertedWith("not a valid participant");
 
-    // try to claim funds before contest has ended
+    // // try to claim funds before contest has ended
+    // await expect(contest.connect(accounts[1]).claimFunds()).to.be.revertedWith("Game still active");
 
-    // claim funds successfully
+    // // claim funds successfully
+    // await h.advanceTime((START_DEADLINE_DAYS + END_DEADLINE_DAYS) * 86400)
+    // await contest.connect(accounts[1]).claimFunds()
     
-    // try to claim funds again
+    // // try to claim funds again
+    // await expect(contest.connect(accounts[1]).claimFunds()).to.be.revertedWith("funds already claimed");
 
-    // last eligible participant claims funds successfully
+    // // last eligible participant claims funds successfully
+    // await contest.connect(accounts[2]).claimFunds()
 
   });
 
