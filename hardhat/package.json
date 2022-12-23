@@ -22,7 +22,7 @@
     "chai": "^4.3.7",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.7.2",
-    "hardhat": "^2.12.2"
+    "hardhat": "^2.12.4"
   },
   "dependencies": {
     "usingtellor": "^5.0.2"

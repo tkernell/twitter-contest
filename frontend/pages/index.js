@@ -13,7 +13,7 @@ export default function Home() {
 
       <main className={styles.main}>
         <h1 className="text-3xl font-bold underline">
-          Twitter Contest V1
+          Twitter Streak Contest V1
         </h1>
 
         

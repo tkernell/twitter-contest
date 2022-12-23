@@ -11,15 +11,14 @@ interface IERC20 {
 
 contract TheContest is UsingTellor {
     address public owner;
-    uint256 public startDeadline;
+    uint256 public startDeadline; // when the contest starts
     uint256 public endDeadline;
-    uint256 public wager;
+    uint256 public wager; // contestant's initial stake
     IERC20 public token;
     uint256 public pot;
     uint256 public protocolFee;
-    uint256 public protocolLoserFeePercentage;
     uint256 public remainingCount;
-    uint256 public reportingWindow = 2 days + 12 hours; 
+    uint256 public reportingWindow = 1 days; 
     
     mapping(address => Member) public members;
     mapping(string => address) public handleToAddress;
@@ -36,8 +35,7 @@ contract TheContest is UsingTellor {
         uint256 _wager,
         uint256 _startDeadlineDays,
         uint256 _endDeadlineDays,
-        uint256 _protocolFee,
-        uint256 _protocolLoserFeePercentage) 
+        uint256 _protocolFee)
         UsingTellor(_tellor) {
         startDeadline = block.timestamp + _startDeadlineDays * 1 days;
         endDeadline = startDeadline + _endDeadlineDays * 1 days;
@@ -45,15 +43,14 @@ contract TheContest is UsingTellor {
         token = IERC20(_token);
         owner = msg.sender;
         protocolFee = _protocolFee;
-        protocolLoserFeePercentage = _protocolLoserFeePercentage;
     }
 
     function register(string memory _handle) public {
         require(bytes(_handle).length > 0, "Handle cannot be empty");
         Member storage _member = members[msg.sender];
-        require(token.transferFrom(msg.sender, address(this), wager));
-        require(!_member.inTheRunning);
-        require(block.timestamp < startDeadline);
+        require(token.transferFrom(msg.sender, address(this), wager+protocolFee), "Wager + fee transfer failed");
+        require(!_member.inTheRunning, "Account already registered");
+        require(block.timestamp < startDeadline, "Contest already started");
         require(handleToAddress[_handle] == address(0), "Handle already registered");
         pot += wager;
         remainingCount++;
@@ -66,6 +63,7 @@ contract TheContest is UsingTellor {
         require(remainingCount > 1, "Only one user left");
         require(block.timestamp > startDeadline, "Contest has not started");
         require(block.timestamp < endDeadline + reportingWindow, "Contest has ended");
+        // Could query id be hardcoded above so it doesn't have to be generated every time this function is called?
         bytes memory _queryData = abi.encode("TwitterContestV1", abi.encode(bytes("")));
         bytes32 _queryId = keccak256(_queryData);
         uint256 _timestampRetrieved = getTimestampbyQueryIdandIndex(_queryId, _index);
@@ -79,10 +77,22 @@ contract TheContest is UsingTellor {
         remainingCount--;
     }
 
+    function getTimestampShouldBeThere(uint256 _index) public view returns(uint256) {
+        bytes memory _queryData = abi.encode("TwitterContestV1", abi.encode(bytes("")));
+        bytes32 _queryId = keccak256(_queryData);
+        return getTimestampbyQueryIdandIndex(_queryId, _index);
+    }
+
+    function getQueryId() public view returns(bytes32) {
+        bytes memory _queryData = abi.encode("TwitterContestV1", abi.encode(bytes("")));
+        return keccak256(_queryData);
+    }
+
     function claimFunds() public {
         Member storage _member = members[msg.sender];
         require(_member.inTheRunning, "not a valid participant");
         require(!_member.claimedFunds, "funds already claimed");
+        // Wouddn't the OR condition result in a bug if the contest was over, but there was only one participant left who'd kept their streak?
         require(block.timestamp > endDeadline + reportingWindow || remainingCount == 1, "Game still active");
         _member.claimedFunds = true;
         token.transfer(msg.sender, pot / remainingCount);
