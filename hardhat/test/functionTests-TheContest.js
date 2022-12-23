@@ -15,7 +15,7 @@ describe("TheContest - Function tests", function() {
   const END_DEADLINE_DAYS = 100;
   const PROTOCOL_FEE = h.toWei("10")
   const WAGER = h.toWei("500")
-  const queryData = abiCoder.encode(["string", "bytes"], ["TwitterContestV1", ethers.utils.toUtf8Bytes("")]);
+  const queryData = abiCoder.encode(["string", "bytes"], ["TwitterContestV1", "0x"]);
   const queryId = keccak256(queryData);
   console.log("queryId:", queryId)
   console.log("queryData:", queryData)
@@ -88,18 +88,41 @@ describe("TheContest - Function tests", function() {
 
   it("claimLoser", async function() {
     // register one account
+    await token.faucet(accounts[1].address)
+    await token.connect(accounts[1]).approve(contest.address, WAGER + PROTOCOL_FEE)
+    await contest.connect(accounts[1]).register("jjabramsdog")
 
     // try to claim loser with only one account
+    await expect(contest.connect(accounts[1]).claimLoser(1)).to.be.revertedWith("Only one user left");
 
     // register two more accounts
+    await token.faucet(accounts[2].address)
+    await token.connect(accounts[2]).approve(contest.address, WAGER + PROTOCOL_FEE)
+    await contest.connect(accounts[2]).register("bingo")
+    await token.faucet(accounts[3].address)
+    await token.connect(accounts[3]).approve(contest.address, WAGER + PROTOCOL_FEE)
+    await contest.connect(accounts[3]).register("bongo")
 
     // try to claim loser before contest start
+    await expect(contest.connect(accounts[1]).claimLoser(1)).to.be.revertedWith("Contest has not started");
 
-    // try to claim loser when no oracle value has been submitted
+    // try to claim loser when no oracle value has been submitted. Simulates invalid index input as well
+    await h.advanceTime(START_DEADLINE_DAYS * 86400 + 1) // advance time past contest start
+    await expect(contest.connect(accounts[1]).claimLoser(1)).to.be.revertedWith("No data found");
 
     // submitValue to tellor oracle signifying someone broke their tweeting streak
+    // convert "bongo" to bytes32
+    let loserHandleAsBytes = ethers.utils.formatBytes32String("bongo");
+    console.log("timestamp should be zero before submission", await tellor.getTimestampbyQueryIdandIndex(queryId, 0))
+    await tellor.submitValue(queryId, loserHandleAsBytes, 0, queryData);
+    console.log("timestamp", await h.getBlock().timestamp)
+    console.log("timestamp from oracle submitted value", await tellor.getTimestampbyQueryIdandIndex(queryId, 0))
+    console.log("timestamp retrieved in contract", await contest.getTimestampShouldBeThere(0))
+
+    console.log("query id from contest contract", await contest.getQueryId())
 
     // try to claim loser before oracle dispute period has elapsed
+    // await expect(contest.connect(accounts[1]).claimLoser(0)).to.be.revertedWith("Oracle dispute period has not passed");
 
     // successfully claim loser
 
