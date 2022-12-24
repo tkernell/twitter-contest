@@ -76,17 +76,6 @@ contract TheContest is UsingTellor {
         remainingCount--;
     }
 
-    function getTimestampShouldBeThere(uint256 _index) public view returns(uint256) {
-        bytes memory _queryData = abi.encode("TwitterContestV1", abi.encode(bytes("")));
-        bytes32 _queryId = keccak256(_queryData);
-        return getTimestampbyQueryIdandIndex(_queryId, _index);
-    }
-
-    function getQueryId() public view returns(bytes32) {
-        bytes memory _queryData = abi.encode("TwitterContestV1", abi.encode(bytes("")));
-        return keccak256(_queryData);
-    }
-
     function claimFunds() public {
         Member storage _member = members[msg.sender];
         require(_member.inTheRunning, "not a valid participant");

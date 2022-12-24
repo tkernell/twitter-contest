@@ -112,18 +112,11 @@ describe("TheContest - Function tests", function() {
 
     // submitValue to tellor oracle signifying someone broke their tweeting streak
     let loserHandleAsBytes = abiCoder.encode(["string"], ["bongo"])
-    // console.log("timestamp should be zero before submission", await tellor.getTimestampbyQueryIdandIndex(queryId, 0))
     await tellor.submitValue(queryId, loserHandleAsBytes, 0, queryData);
-    // console.log("timestamp", await h.getBlock().timestamp)
-    // console.log("timestamp from oracle submitted value", await tellor.getTimestampbyQueryIdandIndex(queryId, 0))
-    // console.log("timestamp retrieved in contract", await contest.getTimestampShouldBeThere(0))
-
-    console.log("query id from contest contract", await contest.getQueryId())
 
     // try to claim loser before oracle dispute period has elapsed
     let block = await h.getBlock()
     let blockTs = block.timestamp
-    console.log("block timestamp", blockTs)
     await expect(contest.connect(accounts[1]).claimLoser(0)).to.be.revertedWith("Oracle dispute period has not passed");
 
     // successfully claim loser
@@ -168,7 +161,6 @@ describe("TheContest - Function tests", function() {
     await expect(contest.connect(accounts[1]).claimFunds()).to.be.revertedWith("Game still active");
 
     // claim funds successfully
-    // get balance before
     let balanceBefore = await token.balanceOf(accounts[1].address)
     await h.advanceTime((START_DEADLINE_DAYS + END_DEADLINE_DAYS) * 86400)
     await contest.connect(accounts[1]).claimFunds()
@@ -185,5 +177,8 @@ describe("TheContest - Function tests", function() {
     await contest.connect(accounts[2]).claimFunds()
     let balanceAfter2 = await token.balanceOf(accounts[2].address)
     assert.equal(balanceAfter2 - balanceBefore2, expectedBalance, "balance 2 not correct")
+
+    // participant who broke their streak tries to claim funds
+    await expect(contest.connect(accounts[3]).claimFunds()).to.be.revertedWith("not a valid participant");
   });
 });
