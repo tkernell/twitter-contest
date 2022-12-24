@@ -67,7 +67,7 @@ contract TheContest is UsingTellor {
         require(block.timestamp < endDeadline + reportingWindow, "Contest has ended");
         uint256 _timestampRetrieved = getTimestampbyQueryIdandIndex(queryId, _index);
         require(_timestampRetrieved > 0, "No data found");
-        require(_timestampRetrieved > block.timestamp - 12 hours, "Oracle dispute period has not passed");
+        require(_timestampRetrieved + 12 hours < block.timestamp, "Oracle dispute period has not passed");
         bytes memory _valueRetrieved = retrieveData(queryId, _timestampRetrieved);
         string memory _handle = abi.decode(_valueRetrieved, (string));
         address _user = handleToAddress[_handle];
