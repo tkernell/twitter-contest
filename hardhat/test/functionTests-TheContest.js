@@ -121,16 +121,25 @@ describe("TheContest - Function tests", function() {
     console.log("query id from contest contract", await contest.getQueryId())
 
     // try to claim loser before oracle dispute period has elapsed
-    await h.advanceTime(3600 * 6)
-    // await expect(contest.connect(accounts[1]).claimLoser(0)).to.be.revertedWith("Oracle dispute period has not passed");
+    let block = await h.getBlock()
+    let blockTs = block.timestamp
+    console.log("block timestamp", blockTs)
+    await expect(contest.connect(accounts[1]).claimLoser(0)).to.be.revertedWith("Oracle dispute period has not passed");
 
     // successfully claim loser
     await h.advanceTime(12 * 3600 + 1) // advance time past oracle dispute period of 12 hours
+    let memberInfoBefore = await contest.getMemberInfo(accounts[3].address)
+    assert.equal(memberInfoBefore.inTheRunning, true, "member should be in the running");
+    await contest.connect(accounts[1]).claimLoser(0)
+    let memberInfo = await contest.getMemberInfo(accounts[3].address)
+    assert.equal(memberInfo.inTheRunning, false, "inTheRunning not set correctly");
 
     // try to claim loser on account not "in the money"
+    await expect(contest.connect(accounts[1]).claimLoser(0)).to.be.revertedWith("User is not in the running");
 
     // try to claim loser after contest has ended
-
+    await h.advanceTime((END_DEADLINE_DAYS + 1) * 86400 + 1)
+    await expect(contest.connect(accounts[1]).claimLoser(0)).to.be.revertedWith("Contest has ended");
   });
 
   it("claimFunds", async function() {
