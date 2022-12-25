@@ -90,4 +90,8 @@ contract TheContest is UsingTellor {
     function getMemberInfo(address _user) public view returns(Member memory) {
         return members[_user];
     }
+
+    function getStartDeadline() public view returns(uint256) {
+        return startDeadline;
+    }
 }
