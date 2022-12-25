@@ -112,25 +112,27 @@ describe("TheContest - Function tests", function() {
 
     // submitValue to tellor oracle signifying someone broke their tweeting streak
     let loserHandleAsBytes = abiCoder.encode(["string"], ["bongo"])
-    console.log("timestamp should be zero before submission", await tellor.getTimestampbyQueryIdandIndex(queryId, 0))
     await tellor.submitValue(queryId, loserHandleAsBytes, 0, queryData);
-    console.log("timestamp", await h.getBlock().timestamp)
-    console.log("timestamp from oracle submitted value", await tellor.getTimestampbyQueryIdandIndex(queryId, 0))
-    console.log("timestamp retrieved in contract", await contest.getTimestampShouldBeThere(0))
-
-    console.log("query id from contest contract", await contest.getQueryId())
 
     // try to claim loser before oracle dispute period has elapsed
-    await h.advanceTime(3600 * 6)
-    // await expect(contest.connect(accounts[1]).claimLoser(0)).to.be.revertedWith("Oracle dispute period has not passed");
+    let block = await h.getBlock()
+    let blockTs = block.timestamp
+    await expect(contest.connect(accounts[1]).claimLoser(0)).to.be.revertedWith("Oracle dispute period has not passed");
 
     // successfully claim loser
     await h.advanceTime(12 * 3600 + 1) // advance time past oracle dispute period of 12 hours
+    let memberInfoBefore = await contest.getMemberInfo(accounts[3].address)
+    assert.equal(memberInfoBefore.inTheRunning, true, "member should be in the running");
+    await contest.connect(accounts[1]).claimLoser(0)
+    let memberInfo = await contest.getMemberInfo(accounts[3].address)
+    assert.equal(memberInfo.inTheRunning, false, "inTheRunning not set correctly");
 
     // try to claim loser on account not "in the money"
+    await expect(contest.connect(accounts[1]).claimLoser(0)).to.be.revertedWith("User is not in the running");
 
     // try to claim loser after contest has ended
-
+    await h.advanceTime((END_DEADLINE_DAYS + 1) * 86400 + 1)
+    await expect(contest.connect(accounts[1]).claimLoser(0)).to.be.revertedWith("Contest has ended");
   });
 
   it("claimFunds", async function() {
@@ -147,27 +149,36 @@ describe("TheContest - Function tests", function() {
 
     // claim loser on one participant
     await h.advanceTime(START_DEADLINE_DAYS * 86400 + 1) // advance time past contest start
-    let loserHandleAsBytes = ethers.utils.formatBytes32String("bongo");
+    let loserHandleAsBytes = abiCoder.encode(["string"], ["bongo"])
     await tellor.submitValue(queryId, loserHandleAsBytes, 0, queryData);
     await h.advanceTime(12 * 3600 + 1) // advance time past oracle dispute period of 12 hours
-    // await contest.connect(accounts[1]).claimLoser(0)
+    await contest.connect(accounts[1]).claimLoser(0)
 
-    // // try to claim funds as non-participant
-    // await expect(contest.connect(accounts[4]).claimFunds()).to.be.revertedWith("not a valid participant");
+    // try to claim funds as non-participant
+    await expect(contest.connect(accounts[4]).claimFunds()).to.be.revertedWith("not a valid participant");
 
-    // // try to claim funds before contest has ended
-    // await expect(contest.connect(accounts[1]).claimFunds()).to.be.revertedWith("Game still active");
+    // try to claim funds before contest has ended
+    await expect(contest.connect(accounts[1]).claimFunds()).to.be.revertedWith("Game still active");
 
-    // // claim funds successfully
-    // await h.advanceTime((START_DEADLINE_DAYS + END_DEADLINE_DAYS) * 86400)
-    // await contest.connect(accounts[1]).claimFunds()
+    // claim funds successfully
+    let balanceBefore = await token.balanceOf(accounts[1].address)
+    await h.advanceTime((START_DEADLINE_DAYS + END_DEADLINE_DAYS) * 86400)
+    await contest.connect(accounts[1]).claimFunds()
+    let balanceAfter = await token.balanceOf(accounts[1].address)
+    // balance should equal wager + half wager of user who broke their streak (bc divied up to the remaining 2 ppl)
+    let expectedBalance = BigInt(WAGER) + BigInt(WAGER) / BigInt(2)
+    assert.equal(balanceAfter - balanceBefore, expectedBalance, "balance not correct")
     
-    // // try to claim funds again
-    // await expect(contest.connect(accounts[1]).claimFunds()).to.be.revertedWith("funds already claimed");
+    // try to claim funds again
+    await expect(contest.connect(accounts[1]).claimFunds()).to.be.revertedWith("funds already claimed");
 
-    // // last eligible participant claims funds successfully
-    // await contest.connect(accounts[2]).claimFunds()
+    // last eligible participant claims funds successfully
+    let balanceBefore2 = await token.balanceOf(accounts[2].address)
+    await contest.connect(accounts[2]).claimFunds()
+    let balanceAfter2 = await token.balanceOf(accounts[2].address)
+    assert.equal(balanceAfter2 - balanceBefore2, expectedBalance, "balance 2 not correct")
 
+    // participant who broke their streak tries to claim funds
+    await expect(contest.connect(accounts[3]).claimFunds()).to.be.revertedWith("not a valid participant");
   });
-
 });

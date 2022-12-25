@@ -19,6 +19,8 @@ contract TheContest is UsingTellor {
     uint256 public protocolFee;
     uint256 public remainingCount;
     uint256 public reportingWindow = 1 days; 
+    bytes queryData = abi.encode("TwitterContestV1", abi.encode(bytes("")));
+    bytes32 queryId = keccak256(queryData);
     
     mapping(address => Member) public members;
     mapping(string => address) public handleToAddress;
@@ -63,29 +65,15 @@ contract TheContest is UsingTellor {
         require(remainingCount > 1, "Only one user left");
         require(block.timestamp > startDeadline, "Contest has not started");
         require(block.timestamp < endDeadline + reportingWindow, "Contest has ended");
-        // Could query id be hardcoded above so it doesn't have to be generated every time this function is called?
-        bytes memory _queryData = abi.encode("TwitterContestV1", abi.encode(bytes("")));
-        bytes32 _queryId = keccak256(_queryData);
-        uint256 _timestampRetrieved = getTimestampbyQueryIdandIndex(_queryId, _index);
+        uint256 _timestampRetrieved = getTimestampbyQueryIdandIndex(queryId, _index);
         require(_timestampRetrieved > 0, "No data found");
-        require(_timestampRetrieved > block.timestamp - 12 hours, "Oracle dispute period has not passed");
-        bytes memory _valueRetrieved = retrieveData(_queryId, _timestampRetrieved);
+        require(_timestampRetrieved + 12 hours < block.timestamp, "Oracle dispute period has not passed");
+        bytes memory _valueRetrieved = retrieveData(queryId, _timestampRetrieved);
         string memory _handle = abi.decode(_valueRetrieved, (string));
         address _user = handleToAddress[_handle];
         require(members[_user].inTheRunning, "User is not in the running");
         members[_user].inTheRunning = false;
         remainingCount--;
-    }
-
-    function getTimestampShouldBeThere(uint256 _index) public view returns(uint256) {
-        bytes memory _queryData = abi.encode("TwitterContestV1", abi.encode(bytes("")));
-        bytes32 _queryId = keccak256(_queryData);
-        return getTimestampbyQueryIdandIndex(_queryId, _index);
-    }
-
-    function getQueryId() public view returns(bytes32) {
-        bytes memory _queryData = abi.encode("TwitterContestV1", abi.encode(bytes("")));
-        return keccak256(_queryData);
     }
 
     function claimFunds() public {
@@ -101,5 +89,9 @@ contract TheContest is UsingTellor {
     // Getters
     function getMemberInfo(address _user) public view returns(Member memory) {
         return members[_user];
+    }
+
+    function getStartDeadline() public view returns(uint256) {
+        return startDeadline;
     }
 }
