@@ -62,6 +62,8 @@ describe("TheContest - Function tests", function() {
     // register successfully
     balanceBefore = await token.balanceOf(bob.address)
     await token.connect(bob).approve(contest.address, WAGER + PROTOCOL_FEE)
+    handlesList = await contest.getHandlesList()
+    assert.equal(handlesList.length, 0, "handlesList not empty");
     await contest.connect(bob).register(handle1)
     balanceAfter = await token.balanceOf(bob.address)
     memberInfo = await contest.getMemberInfo(bob.address)
@@ -72,6 +74,9 @@ describe("TheContest - Function tests", function() {
     assert.equal(await contest.remainingCount(), 1, "remainingCount not incremented");
     assert.equal(await contest.pot(), WAGER, "pot not correct");
     assert.equal(await contest.handleToAddress(handle1), bob.address, "handle not mapped to address");
+    handlesList = await contest.getHandlesList()
+    assert.equal(handlesList.length, 1, "handlesList not updated");
+    assert.equal(handlesList[0], handle1, "handlesList not updated");
 
     // try to register with same account
     await token.connect(bob).approve(contest.address, WAGER + PROTOCOL_FEE)
@@ -181,4 +186,39 @@ describe("TheContest - Function tests", function() {
     // participant who broke their streak tries to claim funds
     await expect(contest.connect(accounts[3]).claimFunds()).to.be.revertedWith("not a valid participant");
   });
+
+  it("getHandlesList", async function() {
+    handle1 = "bob"
+    handle2 = "alice"
+    handle3 = "ricky"
+    // fund accounts
+    bob = accounts[1]
+    alice = accounts[2]
+    ricky = accounts[3]
+    await token.faucet(bob.address)
+    await token.faucet(alice.address)
+    await token.faucet(ricky.address)
+    await token.connect(bob).approve(contest.address, WAGER + PROTOCOL_FEE)
+    await token.connect(alice).approve(contest.address, WAGER + PROTOCOL_FEE)
+    await token.connect(ricky).approve(contest.address, WAGER + PROTOCOL_FEE)
+
+    // register
+    handlesList = await contest.getHandlesList()
+    assert.equal(handlesList.length, 0, "handlesList should be empty")
+    await contest.connect(bob).register(handle1)
+    handlesList = await contest.getHandlesList()
+    assert.equal(handlesList.length, 1, "handlesList should have 1 element")
+    assert.equal(handlesList[0], handle1, "handlesList should have correct handle")
+    await contest.connect(alice).register(handle2)
+    handlesList = await contest.getHandlesList()
+    assert.equal(handlesList.length, 2, "handlesList should have 2 elements")
+    assert.equal(handlesList[0], handle1, "handlesList should have correct handle")
+    assert.equal(handlesList[1], handle2, "handlesList should have correct handle")
+    await contest.connect(ricky).register(handle3)
+    handlesList = await contest.getHandlesList()
+    assert.equal(handlesList.length, 3, "handlesList should have 3 elements")
+    assert.equal(handlesList[0], handle1, "handlesList should have correct handle")
+    assert.equal(handlesList[1], handle2, "handlesList should have correct handle")
+    assert.equal(handlesList[2], handle3, "handlesList should have correct handle")
+  })
 });

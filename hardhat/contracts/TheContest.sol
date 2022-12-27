@@ -15,12 +15,14 @@ contract TheContest is UsingTellor {
     uint256 public endDeadline;
     uint256 public wager; // contestant's initial stake
     IERC20 public token;
+    uint256 public ownerBalance;
     uint256 public pot;
     uint256 public protocolFee;
     uint256 public remainingCount;
     uint256 public reportingWindow = 1 days; 
     bytes queryData = abi.encode("TwitterContestV1", abi.encode(bytes("")));
     bytes32 queryId = keccak256(queryData);
+    string[] private _handles;
     
     mapping(address => Member) public members;
     mapping(string => address) public handleToAddress;
@@ -55,10 +57,12 @@ contract TheContest is UsingTellor {
         require(block.timestamp < startDeadline, "Contest already started");
         require(handleToAddress[_handle] == address(0), "Handle already registered");
         pot += wager;
+        ownerBalance += protocolFee;
         remainingCount++;
         _member.handle = _handle;
         _member.inTheRunning = true;
         handleToAddress[_handle] = msg.sender;
+        _handles.push(_handle);
     }
 
     function claimLoser(uint256 _index) public {
@@ -86,6 +90,12 @@ contract TheContest is UsingTellor {
         token.transfer(msg.sender, pot / remainingCount);
     }
 
+    function ownerClaim() public {
+        require(msg.sender == owner, "Only owner can claim");
+        token.transfer(owner, ownerBalance);
+        ownerBalance = 0;
+    }
+
     // Getters
     function getMemberInfo(address _user) public view returns(Member memory) {
         return members[_user];
@@ -93,5 +103,9 @@ contract TheContest is UsingTellor {
 
     function getStartDeadline() public view returns(uint256) {
         return startDeadline;
+    }
+
+    function getHandlesList() public view returns(string[] memory) {
+        return _handles;
     }
 }
