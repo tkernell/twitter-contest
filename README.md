@@ -1,25 +1,5 @@
-# Twitter Contest V1
-Every contestant enters a stake. If they break their tweeting streak during the contest, they lose their stake. If they maintain their streak, they get a percent of the total losers' stakes plus their own stake once the contest ends.
+# Twitter Contest V1 (AKA BirdStick)
+BirdStick is a tool and competition to help people tweet consistently.
 
-## features
-- entry fee in usdc or other stablecoin
-- twitter handle string entered when person calls register function
-- ppl who enter stake an amount
-- ppl who don't maintain streak lose stake
-- protocol takes percent of total losers' stakes
-- ppl who maintain streak get a percent of total losers' stakes
-- losers and streak maintainers determined using tellor
-
-## setup
-
-# todo
-## frontend
-- connect metamask to app
-- able to call functions from frontend
-
-## contract
-- implement general protocol fee part (upon user registration)
-
-## tellor integration
-- maybe make a script for checking if the user has kept their streak given the contest params
-
+### Contest description
+During the contest registration, people can join by entering a stake and protocol fee. Once the competition starts, they must tweet during each 24 hour window thereafter, until the contest ends. If they break their tweeting streak during the contest (don't tweet during one of the 24hr windows), their stake is in jeopardy. Other contestants report anyone who fails to maintain their tweeting streak. They do so using a Tellor Protocol oracle. Once reported to Tellor, anyone can call the contest function to divy up the loser's stake amongst the contestants still in the running. Funds can be withdrawn from the contract once the competition ends.
