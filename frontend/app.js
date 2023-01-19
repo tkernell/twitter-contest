@@ -150,7 +150,8 @@ var App = {
 
     approve: function() {
         console.log("approved!")
-        approvalAmount = App.wager + App.protocolFee;
+        approvalAmount = BigInt(App.wager) + BigInt(App.protocolFee);
+        console.log("approvalAmount: " + approvalAmount)
         App.contracts.Token.methods.approve(App.contestAddress, approvalAmount).send({from: App.account}).then(function(result) {
           console.log(result);
         }
