@@ -9,8 +9,15 @@
   </head>
   <body>
     <div class="box">
+      <section>
+        <p>Connect your wallet:</p>
+        <button id="connectButton" onclick="App.init()" disabled>Connect</button>
+        <p>Connected address:</p>
+        <p id="connectedAddress"></p>
+        <p id="tokenBalance"></p>
+      </section>
       <header>
-        <h1>The Contest</h1>
+        <h1>Bird Stick</h1>
       </header>
       <section>
         <p>Commit yourself.</p>
@@ -45,7 +52,13 @@
         <p>Report a contestant who has lost their streak to the Tellor oracle. Then, twelve hours after the report, enter the oracle index to kick the contestant out of the contest.</p>
         <p>Enter the oracle index:</p>
         <input type="text" id="oracleIndex" />
-        <button id="claimLoserButton" onclick="App.claimLoser()">Claim Loser</button>
+        <button id="claimLoserButton" onclick="App.claimLoser()" disabled>Claim Loser</button>
+      </section>
+      <section>
+        <h2>Contest Over</h2>
+        <p>Claim your funds:</p>
+        <button id="claimFundsButton" onclick="App.claimFunds()" disabled>Claim Funds</button>
+        <p id="claimFundsResult"></p>
       </section>
       <footer>
         <p>
@@ -53,9 +66,10 @@
         </p>
       </footer>
     </div>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script> -->
+    <script src="./extensions/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.3/web3.min.js"></script>
-    <!-- <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.37/dist/web3.min.js"></script> -->
+    <script src="./extensions/web3.min.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
