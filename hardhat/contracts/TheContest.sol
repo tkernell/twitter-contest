@@ -2,7 +2,6 @@
 pragma solidity 0.8.3;
 
 import "usingtellor/contracts/UsingTellor.sol";
-import "hardhat/console.sol";
 
 interface IERC20 {
     function transfer(address _to, uint256 _amount) external returns(bool);
@@ -99,6 +98,10 @@ contract TheContest is UsingTellor {
     // Getters
     function getMemberInfo(address _user) public view returns(Member memory) {
         return members[_user];
+    }
+
+    function getMemberInfoByHandle(string memory _handle) public view returns(Member memory) {
+        return members[handleToAddress[_handle]];
     }
 
     function getStartDeadline() public view returns(uint256) {
