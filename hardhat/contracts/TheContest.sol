@@ -2,7 +2,6 @@
 pragma solidity 0.8.3;
 
 import "usingtellor/contracts/UsingTellor.sol";
-import "hardhat/console.sol";
 
 interface IERC20 {
     function transfer(address _to, uint256 _amount) external returns(bool);
